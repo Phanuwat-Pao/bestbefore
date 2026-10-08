@@ -47,16 +47,22 @@ schema validator:
 import { v } from "convex/values";
 import schema from "./schema.js";
 
-const notificationDoc = schema.tables.notifications.validator.extend({
-  _id: v.id("notifications"),
-  _creationTime: v.number(),
+const vNotification = schema.doc("notifications").omit("userId").extend({
+  user: v.string(),
 });
 
-export const getLatest = query({
-  args: {},
-  returns: v.nullable(notificationDoc),
+export const getNotification = internalQuery({
+  args: { id: schema.id("notifications") },
+  returns: v.nullable(vNotification),
   handler: async (ctx) => {
-    return await ctx.db.query("notifications").order("desc").first();
+    const notification = await ctx.db.get("notifications", args.id);
+    if (!notification) return null;
+    const { userId, ...rest } = notification;
+    const user = await ctx.db.get("users", userId);
+    return {
+      ...rest,
+      user: user?.name ?? "Unknown",
+    };
   },
 });
 ```
@@ -109,7 +115,7 @@ type MutationCtx = Pick<GenericMutationCtx<GenericDataModel>, "runMutation">;
 export class Notifications {
   constructor(
     private component: ComponentApi,
-    private options?: { defaultChannel?: string }
+    private options?: { defaultChannel?: string },
   ) {}
 
   async send(ctx: MutationCtx, args: { userId: string; message: string }) {
