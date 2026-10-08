@@ -1,0 +1,46 @@
+{
+  "name": "bestbefore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LINE OA food expiry tracker with a web app at full parity (see docs/SRS.md)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:convex": "convex dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "ultracite check",
+    "check:fix": "ultracite fix",
+    "fix": "ultracite fix",
+    "lint": "ultracite check",
+    "lint:ws": "ultracite check",
+    "format": "ultracite fix",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p convex/tsconfig.json",
+    "prepare": "lefthook install || true"
+  },
+  "dependencies": {
+    "@google/genai": "^2.28.0",
+    "@line/liff": "^2.31.2",
+    "@tanstack/react-router": "^1.170.41",
+    "convex": "^1.46.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "^1.168.42",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
+    "@vitejs/plugin-react": "^6.1.2",
+    "lefthook": "^2.2.0",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "typescript": "^7.0.2",
+    "ultracite": "^7.12.4",
+    "vite": "^8.3.3",
+    "vite-plugin-pwa": "^2.0.0",
+    "workbox-window": "^7.4.1"
+  },
+  "packageManager": "pnpm@12.10.1"
+}

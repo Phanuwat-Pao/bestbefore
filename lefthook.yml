@@ -1,0 +1,27 @@
+pre-commit:
+  jobs:
+    - name: lint-format
+      run: pnpm check:fix
+      glob:
+        - "*.js"
+        - "*.jsx"
+        - "*.ts"
+        - "*.tsx"
+        - "*.json"
+        - "*.jsonc"
+        - "*.css"
+        - "*.md"
+      stage_fixed: true
+    - name: parallel-checks
+      group:
+        parallel: true
+        jobs:
+          - name: typecheck
+            run: pnpm typecheck
+          - name: lint-workspace
+            run: pnpm lint:ws
+
+pre-push:
+  jobs:
+    - name: audit-critical
+      run: pnpm audit --audit-level=high

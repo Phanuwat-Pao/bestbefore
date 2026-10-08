@@ -1,0 +1,12 @@
+# braces <=3.0.3 (GHSA-vfj7-8cjw-p6xm, 2026-09-18) has no patched release yet:
+# 3.0.3 is still the latest on npm. It only reaches the tree through ultracite's
+# fast-glob at lint time, never with untrusted input, so it is ignored until a
+# fixed braces ships.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
+allowBuilds:
+  '@google/genai': true
+  esbuild: true
+  lefthook: true
+  protobufjs: true

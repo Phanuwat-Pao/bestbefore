@@ -1,0 +1,28 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# env
+.env
+.env.local
+.env.*.local
+
+
+# tanstack router generated route tree
+src/routeTree.gen.ts
+
+# pwa generated
+dev-dist
+
+# vercel
+.vercel
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.log
+npm-debug.log*
+.env*

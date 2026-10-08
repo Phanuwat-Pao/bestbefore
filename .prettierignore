@@ -1,0 +1,11 @@
+# oxfmt respects .gitignore and .prettierignore.
+# Keep the hand-authored / audited docs out of auto-formatting.
+docs/
+dist
+dev-dist
+convex/_generated
+src/routeTree.gen.ts
+
+# pnpm-managed (don't reformat — pnpm rewrites these)
+pnpm-workspace.yaml
+pnpm-lock.yaml
