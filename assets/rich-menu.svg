@@ -12,6 +12,6 @@
     <rect x="118" y="-92" width="64" height="24" rx="6" fill="#16A34A"/>
     <rect x="138" y="-112" width="24" height="64" rx="6" fill="#16A34A"/>
   </g>
-  <text x="1250" y="640" text-anchor="middle" font-family="Loma, Garuda, 'Noto Sans Thai', sans-serif" font-weight="bold" font-size="150" fill="#ffffff">เพิ่มของ</text>
-  <text x="1250" y="750" text-anchor="middle" font-family="Loma, Garuda, 'Noto Sans Thai', sans-serif" font-size="64" fill="#DCFCE7">ถ่ายรูปแล้วให้บอทอ่านวันหมดอายุ</text>
+  <text x="1250" y="640" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="150" fill="#ffffff">เพิ่มของ</text>
+  <text x="1250" y="750" text-anchor="middle" font-family="Sarabun" font-size="64" fill="#DCFCE7">ถ่ายรูปแล้วให้บอทอ่านวันหมดอายุ</text>
 </svg>
