@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="843" viewBox="0 0 2500 843">
+  <rect width="2500" height="843" fill="#16A34A"/>
+  <g transform="translate(1250 300)">
+    <!-- camera body -->
+    <rect x="-150" y="-80" width="300" height="200" rx="34" fill="none" stroke="#ffffff" stroke-width="26"/>
+    <!-- camera top bump -->
+    <path d="M-60 -80 L-35 -125 L35 -125 L60 -80" fill="none" stroke="#ffffff" stroke-width="26" stroke-linejoin="round"/>
+    <!-- lens -->
+    <circle cx="0" cy="20" r="62" fill="none" stroke="#ffffff" stroke-width="26"/>
+    <!-- plus badge -->
+    <circle cx="150" cy="-80" r="68" fill="#ffffff"/>
+    <rect x="118" y="-92" width="64" height="24" rx="6" fill="#16A34A"/>
+    <rect x="138" y="-112" width="24" height="64" rx="6" fill="#16A34A"/>
+  </g>
+  <text x="1250" y="640" text-anchor="middle" font-family="Loma, Garuda, 'Noto Sans Thai', sans-serif" font-weight="bold" font-size="150" fill="#ffffff">เพิ่มของ</text>
+  <text x="1250" y="750" text-anchor="middle" font-family="Loma, Garuda, 'Noto Sans Thai', sans-serif" font-size="64" fill="#DCFCE7">ถ่ายรูปแล้วให้บอทอ่านวันหมดอายุ</text>
+</svg>
