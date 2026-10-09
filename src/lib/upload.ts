@@ -1,4 +1,5 @@
 import type { Id } from "../../convex/_generated/dataModel";
+import { dict } from "./i18n";
 
 /** Upload one blob to a Convex upload URL and return its storage id. */
 export async function uploadToConvex(
@@ -11,7 +12,7 @@ export async function uploadToConvex(
     method: "POST",
   });
   if (!res.ok) {
-    throw new Error(`อัปโหลดรูปไม่สำเร็จ (${res.status})`);
+    throw new Error(dict().uploadFailed(String(res.status)));
   }
   const data: unknown = await res.json();
   if (
@@ -20,7 +21,7 @@ export async function uploadToConvex(
     !("storageId" in data) ||
     typeof data.storageId !== "string"
   ) {
-    throw new Error("อัปโหลดรูปไม่สำเร็จ: ไม่ได้รับ storageId");
+    throw new Error(dict().uploadFailed("no storageId"));
   }
   // Earned cast: the Convex upload endpoint only ever returns a `_storage` id.
   return data.storageId as Id<"_storage">;

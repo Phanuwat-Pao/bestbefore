@@ -21,19 +21,21 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { UrgencyBadge } from "@/components/urgency-badge";
+import { useI18n } from "@/lib/i18n";
 import { prepareImage } from "@/lib/image";
 import { useReadySession } from "@/lib/session";
 import { uploadToConvex } from "@/lib/upload";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { formatThai, parseIsoDate } from "../../convex/lib/dates";
+import { parseIsoDate } from "../../convex/lib/dates";
 
 export const Route = createFileRoute("/items/$itemId")({ component: ItemPage });
 
 const MAX_PHOTOS = 6;
 
 function ItemPage() {
+  const { t } = useI18n();
   const { itemId } = Route.useParams();
   const { token } = useReadySession();
   const item = useQuery(api.items.get, { itemId, token });
@@ -50,9 +52,9 @@ function ItemPage() {
     return (
       <Card>
         <CardContent className="flex flex-col items-start gap-3">
-          <p className="text-muted-foreground">ไม่พบรายการนี้</p>
+          <p className="text-muted-foreground">{t.notFound}</p>
           <Button asChild variant="outline">
-            <Link to="/">กลับไปหน้ารายการ</Link>
+            <Link to="/">{t.backToList}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -66,6 +68,7 @@ type ItemDetail = NonNullable<
 >;
 
 function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
+  const { t, fmtDate, locale } = useI18n();
   const navigate = useNavigate();
   const update = useMutation(api.items.update);
   const markUsed = useMutation(api.items.markUsed);
@@ -103,9 +106,9 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
   };
 
   const save = () =>
-    run("บันทึกแล้ว", async () => {
+    run(t.saved, async () => {
       if (expiresOn !== "" && !parseIsoDate(expiresOn)) {
-        throw new Error("รูปแบบวันที่ไม่ถูกต้อง");
+        throw new Error(t.badDate);
       }
       await update({
         expiresOn: expiresOn === "" ? null : expiresOn,
@@ -117,7 +120,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
     });
 
   const uploadNew = () =>
-    run("เพิ่มรูปแล้ว", async () => {
+    run(t.photosAdded, async () => {
       const storageIds: Id<"_storage">[] = [];
       for (const file of newFiles) {
         const blob = await prepareImage(file);
@@ -129,24 +132,24 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
     });
 
   const onUsed = () =>
-    run("ทำเครื่องหมายว่าใช้แล้ว", async () => {
+    run(t.markedUsed, async () => {
       await markUsed({ itemId: item.id, token });
       await navigate({ to: "/" });
     });
 
   const onDeleteConfirmed = () =>
-    run("ลบแล้ว", async () => {
+    run(t.deleted, async () => {
       await remove({ itemId: item.id, token });
       await navigate({ to: "/" });
     });
 
   const onRestore = () =>
-    run("กู้คืนแล้ว", async () => {
+    run(t.restored, async () => {
       await restore({ itemId: item.id, token });
     });
 
   const onRemovePhoto = (photoId: Id<"photos">) =>
-    run("ลบรูปแล้ว", async () => {
+    run(t.photoRemoved, async () => {
       await removePhoto({ photoId, token });
       setPhotoToRemove(null);
     });
@@ -168,13 +171,13 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
         <Alert>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              รายการนี้{item.status === "used" ? "ใช้แล้ว" : "ถูกลบแล้ว"}
+              {item.status === "used" ? t.archivedUsed : t.archivedDeleted}
               {item.archivedAt &&
-                ` เมื่อ ${new Date(item.archivedAt).toLocaleDateString("th-TH")}`}
+                ` ${t.on} ${new Date(item.archivedAt).toLocaleDateString(locale === "th" ? "th-TH" : "en-GB")}`}
             </span>
             <Button size="sm" onClick={onRestore} disabled={busy}>
               <Undo2 data-icon="inline-start" />
-              กู้คืน
+              {t.restore}
             </Button>
           </AlertDescription>
         </Alert>
@@ -205,7 +208,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
                 size="icon-sm"
                 variant="secondary"
                 className="absolute top-1 right-1 rounded-full bg-black/60 text-white hover:bg-black/80"
-                aria-label="ลบรูปนี้"
+                aria-label={t.removePhoto}
                 disabled={busy}
                 onClick={() => setPhotoToRemove(photo.photoId)}
               >
@@ -219,7 +222,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
       <Card>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">ชื่อของ</Label>
+            <Label htmlFor="name">{t.nameLabel}</Label>
             <Input
               id="name"
               className="h-11 text-base"
@@ -228,7 +231,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="expiresOn">วันหมดอายุ</Label>
+            <Label htmlFor="expiresOn">{t.expiryLabel}</Label>
             <Input
               id="expiresOn"
               type="date"
@@ -238,12 +241,12 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
             />
             <p className="text-muted-foreground text-sm">
               {item.expiresOn
-                ? `ปัจจุบัน: ${formatThai(item.expiresOn)}`
-                : "ยังไม่ระบุวันหมดอายุ"}
+                ? `${t.current}: ${fmtDate(item.expiresOn)}`
+                : t.noExpiry}
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="note">หมายเหตุ</Label>
+            <Label htmlFor="note">{t.noteLabel}</Label>
             <Textarea
               id="note"
               value={note}
@@ -252,7 +255,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
           </div>
           {item.guess && (
             <p className="text-muted-foreground text-xs">
-              AI อ่านได้: {item.guess.name ?? "-"}
+              {t.aiReadShort}: {item.guess.name ?? "-"}
               {item.guess.expiresOn && ` · ${item.guess.expiresOn}`}
               {item.guess.note && ` · ${item.guess.note}`}
             </p>
@@ -263,7 +266,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
             onClick={save}
             disabled={busy || !dirty || name.trim() === ""}
           >
-            บันทึกการแก้ไข
+            {t.saveChanges}
           </Button>
         </CardContent>
       </Card>
@@ -271,7 +274,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
       {photosLeft > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>เพิ่มรูป</CardTitle>
+            <CardTitle>{t.addPhotos}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <PhotoPicker
@@ -287,7 +290,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
               {busy && (
                 <Loader2 className="animate-spin" data-icon="inline-start" />
               )}
-              อัปโหลด
+              {t.upload}
             </Button>
           </CardContent>
         </Card>
@@ -302,7 +305,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
             disabled={busy}
           >
             <Check data-icon="inline-start" />
-            ใช้แล้ว
+            {t.used}
           </Button>
           <Button
             size="lg"
@@ -312,7 +315,7 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
             disabled={busy}
           >
             <Trash2 data-icon="inline-start" />
-            ลบ
+            {t.delete}
           </Button>
         </div>
       )}
@@ -320,24 +323,22 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
       <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ลบ "{item.name}"?</DialogTitle>
-            <DialogDescription>
-              กู้คืนได้จากหน้าประวัติภายใน 30 วัน หลังจากนั้นจะถูกลบถาวรพร้อมรูป
-            </DialogDescription>
+            <DialogTitle>{t.deleteTitle(item.name)}</DialogTitle>
+            <DialogDescription>{t.deleteBody}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmingDelete(false)}
             >
-              ยกเลิก
+              {t.cancel}
             </Button>
             <Button
               variant="destructive"
               onClick={onDeleteConfirmed}
               disabled={busy}
             >
-              ยืนยันลบ
+              {t.confirmDelete}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -349,19 +350,19 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ลบรูปนี้?</DialogTitle>
-            <DialogDescription>รูปจะถูกลบทันทีและกู้คืนไม่ได้</DialogDescription>
+            <DialogTitle>{t.removePhotoTitle}</DialogTitle>
+            <DialogDescription>{t.removePhotoBody}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPhotoToRemove(null)}>
-              ยกเลิก
+              {t.cancel}
             </Button>
             <Button
               variant="destructive"
               disabled={busy}
               onClick={() => photoToRemove && onRemovePhoto(photoToRemove)}
             >
-              ลบรูป
+              {t.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

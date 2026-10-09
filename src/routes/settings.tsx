@@ -4,6 +4,10 @@ import { BellOff, BellRing, LogOut, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Page } from "@/components/page";
+import {
+  LanguageToggleGroup,
+  ThemeToggleGroup,
+} from "@/components/preferences";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { useI18n } from "@/lib/i18n";
 import { isInLineApp } from "@/lib/liff";
 import {
   currentPushEndpoint,
@@ -31,10 +36,11 @@ import { api } from "../../convex/_generated/api";
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 function SettingsPage() {
+  const { t } = useI18n();
   const { member } = useReadySession();
   const { logout } = useSession();
   return (
-    <Page title="ตั้งค่า">
+    <Page title={t.settingsTitle}>
       <Card>
         <CardContent className="flex items-center gap-3">
           {member.pictureUrl ? (
@@ -48,18 +54,19 @@ function SettingsPage() {
           )}
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium">
-              {member.displayName ?? "สมาชิก"}
+              {member.displayName ?? t.member}
             </div>
             <div className="text-muted-foreground text-xs">
-              เข้าสู่ระบบด้วย LINE
+              {t.loggedInWithLine}
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut data-icon="inline-start" />
-            ออก
+            {t.logout}
           </Button>
         </CardContent>
       </Card>
+      <AppearanceSection />
       <PushSection />
       <ReminderSection />
       <SourcesSection />
@@ -68,7 +75,30 @@ function SettingsPage() {
   );
 }
 
+function AppearanceSection() {
+  const { t } = useI18n();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t.appearance}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label>{t.theme}</Label>
+          <ThemeToggleGroup />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>{t.language}</Label>
+          <LanguageToggleGroup />
+          <p className="text-muted-foreground text-sm">{t.languageHint}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function PushSection() {
+  const { t } = useI18n();
   const { token } = useReadySession();
   const save = useMutation(api.push.subscriptions.save);
   const remove = useMutation(api.push.subscriptions.remove);
@@ -93,7 +123,7 @@ function PushSection() {
       const sub = await subscribeToPush();
       await save({ ...sub, token, userAgent: navigator.userAgent });
       setEndpoint(sub.endpoint);
-      setMsg("เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว");
+      setMsg(t.pushEnabled);
     } catch (error) {
       setMsg(error instanceof Error ? error.message : String(error));
     }
@@ -106,39 +136,31 @@ function PushSection() {
       await remove({ endpoint: removed, token });
     }
     setEndpoint(null);
-    setMsg("ปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว");
+    setMsg(t.pushDisabled);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>การแจ้งเตือน</CardTitle>
-        <CardDescription>
-          สรุปของใกล้หมดอายุทุกเช้า 9 โมง ส่งเป็นการแจ้งเตือนของเบราว์เซอร์ ไม่ใช้โควตาข้อความ
-          LINE
-        </CardDescription>
+        <CardTitle>{t.notifications}</CardTitle>
+        <CardDescription>{t.notificationsHint}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {inLine && (
-          <p className="text-muted-foreground text-sm">
-            ในแอป LINE เปิดการแจ้งเตือนไม่ได้ ให้เปิดเว็บนี้ใน Safari หรือ Chrome
-            แล้วเพิ่มไปยังหน้าจอโฮม
-          </p>
+          <p className="text-muted-foreground text-sm">{t.pushInLine}</p>
         )}
         {!(pushSupported() || inLine) && (
-          <p className="text-muted-foreground text-sm">
-            เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน
-          </p>
+          <p className="text-muted-foreground text-sm">{t.pushUnsupported}</p>
         )}
         {thisDeviceOn ? (
           <Button variant="outline" onClick={disable}>
             <BellOff data-icon="inline-start" />
-            ปิดบนอุปกรณ์นี้
+            {t.pushDisable}
           </Button>
         ) : (
           <Button onClick={enable} disabled={inLine}>
             <BellRing data-icon="inline-start" />
-            เปิดบนอุปกรณ์นี้
+            {t.pushEnable}
           </Button>
         )}
         {msg && <p className="text-muted-foreground text-sm">{msg}</p>}
@@ -153,13 +175,13 @@ function PushSection() {
                 >
                   <span className="min-w-0 flex-1 truncate">
                     {s.endpoint === endpoint
-                      ? "อุปกรณ์นี้"
-                      : (s.userAgent ?? "อุปกรณ์อื่น")}
+                      ? t.thisDevice
+                      : (s.userAgent ?? t.otherDevice)}
                   </span>
                   <Button
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="ลบอุปกรณ์นี้"
+                    aria-label={t.removeDevice}
                     onClick={() => remove({ endpoint: s.endpoint, token })}
                   >
                     <Trash2 />
@@ -175,6 +197,7 @@ function PushSection() {
 }
 
 function ReminderSection() {
+  const { t } = useI18n();
   const { token, settings } = useReadySession();
   const update = useMutation(api.settings.update);
   const [reminderDays, setReminderDays] = useState(settings.reminderDays);
@@ -190,13 +213,11 @@ function ReminderSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>ช่วงเวลาเตือน</CardTitle>
+        <CardTitle>{t.reminderWindows}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="reminderDays">
-            นับว่า "ใกล้หมด" และแจ้งเตือนบนเว็บเมื่อเหลือไม่เกิน (วัน)
-          </Label>
+          <Label htmlFor="reminderDays">{t.reminderDaysLabel}</Label>
           <Input
             id="reminderDays"
             type="number"
@@ -209,7 +230,7 @@ function ReminderSection() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="piggybackDays">บอทเตือนในกลุ่มเมื่อเหลือไม่เกิน (วัน)</Label>
+          <Label htmlFor="piggybackDays">{t.piggybackDaysLabel}</Label>
           <Input
             id="piggybackDays"
             type="number"
@@ -220,32 +241,29 @@ function ReminderSection() {
             value={piggybackDays}
             onChange={(e) => setPiggybackDays(Number(e.target.value))}
           />
-          <p className="text-muted-foreground text-sm">
-            บอทจะตอบเตือนต่อท้ายข้อความใดก็ได้ในกลุ่ม วันละไม่เกินหนึ่งครั้งต่อกลุ่ม
-          </p>
+          <p className="text-muted-foreground text-sm">{t.piggybackHint}</p>
         </div>
-        <Button onClick={save}>{saved ? "บันทึกแล้ว" : "บันทึก"}</Button>
+        <Button onClick={save}>{saved ? t.saved : t.save}</Button>
       </CardContent>
     </Card>
   );
 }
 
 function SourcesSection() {
+  const { t } = useI18n();
   const { token } = useReadySession();
   const sources = useQuery(api.sources.list, { token });
   const setPiggyback = useMutation(api.sources.setPiggyback);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>กลุ่มที่บอทอยู่</CardTitle>
+        <CardTitle>{t.groups}</CardTitle>
       </CardHeader>
       <CardContent>
         {sources === undefined ? (
           <Skeleton className="h-10 w-full" />
         ) : sources.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            ยังไม่มี เชิญบอทเข้ากลุ่ม LINE ของบ้านก่อน
-          </p>
+          <p className="text-muted-foreground text-sm">{t.groupsEmpty}</p>
         ) : (
           <ul className="flex flex-col divide-y">
             {sources.map((s) => (
@@ -256,16 +274,16 @@ function SourcesSection() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">
                     {s.displayName ??
-                      (s.sourceType === "group" ? "กลุ่ม" : "แชทหลายคน")}
+                      (s.sourceType === "group" ? t.group : t.room)}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {s.lastPiggybackOn
-                      ? `เตือนล่าสุด ${s.lastPiggybackOn}`
-                      : "ยังไม่เคยเตือน"}
+                      ? t.lastWarned(s.lastPiggybackOn)
+                      : t.neverWarned}
                   </div>
                 </div>
                 <Label htmlFor={`pb-${s.id}`} className="text-sm">
-                  เตือนในกลุ่ม
+                  {t.warnInGroup}
                 </Label>
                 <Switch
                   id={`pb-${s.id}`}
@@ -284,13 +302,14 @@ function SourcesSection() {
 }
 
 function MembersSection() {
+  const { t } = useI18n();
   const { token } = useReadySession();
   const members = useQuery(api.members.list, { token });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>สมาชิกในบ้าน</CardTitle>
-        <CardDescription>ใครที่เพิ่มบอทเป็นเพื่อนจะเห็นรายการเดียวกัน</CardDescription>
+        <CardTitle>{t.members}</CardTitle>
+        <CardDescription>{t.membersHint}</CardDescription>
       </CardHeader>
       <CardContent>
         {members === undefined ? (
@@ -308,7 +327,7 @@ function MembersSection() {
                 ) : (
                   <div className="bg-muted size-8 rounded-full" />
                 )}
-                <span className="truncate">{m.displayName ?? "สมาชิก"}</span>
+                <span className="truncate">{m.displayName ?? t.member}</span>
               </li>
             ))}
           </ul>

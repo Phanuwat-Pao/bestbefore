@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/lib/i18n";
 import { prepareImage } from "@/lib/image";
 import { useReadySession } from "@/lib/session";
 import { uploadToConvex } from "@/lib/upload";
@@ -18,7 +19,7 @@ import { uploadToConvex } from "@/lib/upload";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Guess } from "../../convex/ai";
-import { formatThai, parseIsoDate } from "../../convex/lib/dates";
+import { parseIsoDate } from "../../convex/lib/dates";
 
 export const Route = createFileRoute("/add")({ component: AddPage });
 
@@ -41,18 +42,19 @@ type Stage =
       aiNote: string | null;
     };
 
-const CONFIDENCE_LABEL: Record<Guess["confidence"], string> = {
-  high: "มั่นใจสูง",
-  low: "ไม่ค่อยมั่นใจ",
-  medium: "มั่นใจปานกลาง",
-};
-
 function AddPage() {
+  const { t, fmtDate } = useI18n();
   const { token } = useReadySession();
   const navigate = useNavigate();
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const guessAction = useAction(api.ai.guess);
   const createItem = useMutation(api.items.create);
+
+  const confidenceLabel: Record<Guess["confidence"], string> = {
+    high: t.confidenceHigh,
+    low: t.confidenceLow,
+    medium: t.confidenceMedium,
+  };
 
   const [files, setFiles] = useState<File[]>([]);
   const [stage, setStage] = useState<Stage>({ kind: "pick" });
@@ -85,7 +87,7 @@ function AddPage() {
         });
       } else {
         setStage({
-          aiNote: "อ่านรูปไม่ได้ในตอนนี้ กรุณากรอกชื่อและวันหมดอายุเอง",
+          aiNote: t.aiUnavailable,
           guess: null,
           kind: "form",
           storageIds,
@@ -103,7 +105,7 @@ function AddPage() {
     }
     setFormError(null);
     if (expiresOn !== "" && !parseIsoDate(expiresOn)) {
-      setFormError("รูปแบบวันที่ไม่ถูกต้อง");
+      setFormError(t.badDate);
       return;
     }
     setStage({ ...stage, kind: "saving" });
@@ -130,10 +132,10 @@ function AddPage() {
     stage.kind === "saving";
 
   return (
-    <Page title="เพิ่มของ">
+    <Page title={t.addTitle}>
       {formError && (
         <Alert variant="destructive">
-          <AlertTitle>ไม่สำเร็จ</AlertTitle>
+          <AlertTitle>{t.failed}</AlertTitle>
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       )}
@@ -150,7 +152,7 @@ function AddPage() {
                 disabled={files.length === 0}
               >
                 <ScanLine data-icon="inline-start" />
-                อ่านวันหมดอายุจากรูป
+                {t.readFromPhotos}
               </Button>
               <Button
                 size="lg"
@@ -164,7 +166,7 @@ function AddPage() {
                   })
                 }
               >
-                กรอกเองโดยไม่ใช้รูป
+                {t.manualEntry}
               </Button>
             </div>
           </CardContent>
@@ -176,8 +178,8 @@ function AddPage() {
           <CardContent className="text-muted-foreground flex items-center gap-3 py-8">
             <Loader2 className="size-5 animate-spin" />
             {stage.kind === "uploading"
-              ? `กำลังอัปโหลดรูป ${stage.done}/${stage.total}…`
-              : "กำลังอ่านชื่อและวันหมดอายุจากรูป…"}
+              ? t.uploading(stage.done, stage.total)
+              : t.reading}
           </CardContent>
         </Card>
       )}
@@ -188,14 +190,12 @@ function AddPage() {
             {stage.guess && (
               <Alert>
                 <Sparkles />
-                <AlertTitle>AI อ่านได้ว่า</AlertTitle>
+                <AlertTitle>{t.aiRead}</AlertTitle>
                 <AlertDescription>
-                  {stage.guess.note ?? "ไม่มีรายละเอียด"} ·{" "}
-                  {CONFIDENCE_LABEL[stage.guess.confidence]}
-                  {stage.guess.basis === "estimated" &&
-                    " · ประเมินจากประเภทสินค้า กรุณาตรวจสอบ"}
-                  {stage.guess.basis === "none" &&
-                    " · ไม่พบวันหมดอายุ กรุณากรอกเอง"}
+                  {stage.guess.note ?? t.aiNoDetail} ·{" "}
+                  {confidenceLabel[stage.guess.confidence]}
+                  {stage.guess.basis === "estimated" && ` · ${t.aiEstimated}`}
+                  {stage.guess.basis === "none" && ` · ${t.aiNone}`}
                 </AlertDescription>
               </Alert>
             )}
@@ -206,19 +206,19 @@ function AddPage() {
             )}
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="name">ชื่อของ</Label>
+              <Label htmlFor="name">{t.nameLabel}</Label>
               <Input
                 id="name"
                 className="h-11 text-base"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="เช่น นมสด ดัชมิลล์"
+                placeholder={t.namePlaceholder}
                 autoFocus
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="expiresOn">วันหมดอายุ</Label>
+              <Label htmlFor="expiresOn">{t.expiryLabel}</Label>
               <Input
                 id="expiresOn"
                 type="date"
@@ -228,18 +228,18 @@ function AddPage() {
               />
               <p className="text-muted-foreground text-sm">
                 {expiresParsed
-                  ? `หมดอายุ ${formatThai(expiresParsed)}`
-                  : "เว้นว่างได้ถ้ายังไม่ทราบ แล้วมาใส่ทีหลัง"}
+                  ? `${t.expiresPrefix} ${fmtDate(expiresParsed)}`
+                  : t.expiryEmptyHint}
               </p>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="note">หมายเหตุ</Label>
+              <Label htmlFor="note">{t.noteLabel}</Label>
               <Textarea
                 id="note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="เช่น เปิดแล้วเมื่อ 10 ต.ค."
+                placeholder={t.notePlaceholder}
               />
             </div>
 
@@ -253,14 +253,14 @@ function AddPage() {
                 {stage.kind === "saving" && (
                   <Loader2 className="animate-spin" data-icon="inline-start" />
                 )}
-                {stage.kind === "saving" ? "กำลังบันทึก…" : "บันทึก"}
+                {stage.kind === "saving" ? t.saving : t.save}
               </Button>
               <Button
                 variant="ghost"
                 disabled={busy}
                 onClick={() => setStage({ kind: "pick" })}
               >
-                กลับไปเลือกรูป
+                {t.backToPhotos}
               </Button>
             </div>
           </CardContent>

@@ -2,42 +2,38 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Page } from "@/components/page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/help")({ component: HelpPage });
 
-const COMMANDS: { cmd: string; what: string }[] = [
-  { cmd: "@BestBefore หรือ รายการ", what: "ของทั้งหมด เรียงใกล้หมดอายุก่อน" },
-  { cmd: "ใกล้หมด", what: "ของที่ใกล้หมดอายุ" },
-  { cmd: "หมดแล้ว", what: "ของที่หมดอายุแล้ว" },
-  { cmd: "ประวัติ", what: "ของที่ใช้แล้ว" },
-  { cmd: "ช่วย", what: "รายการคำสั่ง" },
-];
-
 function HelpPage() {
+  const { t } = useI18n();
+  const commands: { cmd: string; what: string }[] = [
+    { cmd: "@BestBefore / รายการ", what: t.helpCmdList },
+    { cmd: "ใกล้หมด", what: t.helpCmdSoon },
+    { cmd: "หมดแล้ว", what: t.helpCmdExpired },
+    { cmd: "ประวัติ", what: t.helpCmdHistory },
+    { cmd: "ช่วย", what: t.helpCmdHelp },
+  ];
   return (
-    <Page title="วิธีใช้">
+    <Page title={t.helpTitle}>
       <Card>
         <CardHeader>
-          <CardTitle>เพิ่มของ</CardTitle>
+          <CardTitle>{t.helpAddTitle}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
-          <p>
-            กด <strong>เพิ่ม</strong> แล้วถ่ายรูปด้านหน้าสินค้าและวันหมดอายุ
-            ระบบจะอ่านชื่อและวันที่ให้ ตรวจสอบแล้วกดบันทึก ถ้าอ่านไม่ได้ก็กรอกเองได้
-          </p>
-          <p className="text-muted-foreground">
-            วันที่บนฉลากไทยมักเป็น วัน/เดือน/ปี พ.ศ. เช่น 15/10/69 คือ 15 ต.ค. 2569
-          </p>
+          <p>{t.helpAddBody}</p>
+          <p className="text-muted-foreground">{t.helpAddDate}</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>ในกลุ่ม LINE</CardTitle>
+          <CardTitle>{t.helpGroupTitle}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
-          <p>แท็กบอทในกลุ่มแล้วพิมพ์คำสั่ง</p>
+          <p>{t.helpGroupBody}</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
-            {COMMANDS.map((c) => (
+            {commands.map((c) => (
               <div key={c.cmd} className="contents">
                 <dt>
                   <code className="bg-muted rounded px-1.5 py-0.5 text-xs">
@@ -48,28 +44,20 @@ function HelpPage() {
               </div>
             ))}
           </dl>
-          <p className="text-muted-foreground">
-            ในรายการมีปุ่ม ใช้แล้ว แก้ไข และ ลบ ให้กดได้เลย ถ้ามีของใกล้หมดอายุ
-            บอทจะตอบเตือนต่อท้ายข้อความในกลุ่มวันละครั้ง
-          </p>
+          <p className="text-muted-foreground">{t.helpGroupNote}</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>แชทส่วนตัวกับบอท</CardTitle>
+          <CardTitle>{t.helpDmTitle}</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
-          พิมพ์คำสั่งเดียวกันได้โดยไม่ต้องแท็ก และมีปุ่มเพิ่มของในเมนูด้านล่าง
-        </CardContent>
+        <CardContent className="text-sm">{t.helpDmBody}</CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>การแจ้งเตือน</CardTitle>
+          <CardTitle>{t.helpPushTitle}</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
-          เปิดการแจ้งเตือนในหน้าตั้งค่า จะได้สรุปของใกล้หมดอายุทุกเช้า บน iPhone ต้องเปิดเว็บนี้ใน
-          Safari แล้วเพิ่มไปยังหน้าจอโฮมก่อน
-        </CardContent>
+        <CardContent className="text-sm">{t.helpPushBody}</CardContent>
       </Card>
     </Page>
   );

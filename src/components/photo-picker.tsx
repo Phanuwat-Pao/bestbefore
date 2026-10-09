@@ -2,6 +2,7 @@ import { Camera, Images, X } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 interface PhotoPickerProps {
   files: File[];
@@ -17,6 +18,7 @@ export function PhotoPicker({
   max,
   disabled,
 }: PhotoPickerProps) {
+  const { t } = useI18n();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const previews = useMemo(
@@ -53,7 +55,7 @@ export function PhotoPicker({
           disabled={disabled || full}
         >
           <Camera data-icon="inline-start" />
-          ถ่ายรูป
+          {t.takePhoto}
         </Button>
         <Button
           type="button"
@@ -64,7 +66,7 @@ export function PhotoPicker({
           disabled={disabled || full}
         >
           <Images data-icon="inline-start" />
-          เลือกจากคลัง
+          {t.fromGallery}
         </Button>
       </div>
       <input
@@ -104,7 +106,7 @@ export function PhotoPicker({
                 className="absolute top-1 right-1 rounded-full bg-black/60 text-white hover:bg-black/80"
                 onClick={() => onChange(files.filter((_, j) => j !== i))}
                 disabled={disabled}
-                aria-label="ลบรูปนี้"
+                aria-label={t.removePhoto}
               >
                 <X />
               </Button>
@@ -112,9 +114,7 @@ export function PhotoPicker({
           ))}
         </div>
       )}
-      <p className="text-muted-foreground text-sm">
-        ถ่ายด้านหน้าสินค้าและวันหมดอายุให้ชัด สูงสุด {max} รูป
-      </p>
+      <p className="text-muted-foreground text-sm">{t.photoHint(max)}</p>
     </div>
   );
 }

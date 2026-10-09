@@ -1,5 +1,7 @@
 // Web Push subscription helper. Runs in the browser, on a user gesture.
 
+import { dict } from "./i18n";
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
@@ -22,16 +24,14 @@ export function pushSupported(): boolean {
 export async function subscribeToPush(): Promise<PushKeys> {
   const vapid = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   if (!vapid) {
-    throw new Error("ยังไม่ได้ตั้งค่า VITE_VAPID_PUBLIC_KEY");
+    throw new Error(dict().pushNoVapid);
   }
   if (!pushSupported()) {
-    throw new Error(
-      "เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน บน iPhone ให้เพิ่มไปยังหน้าจอโฮมก่อน แล้วเปิดจากไอคอนนั้น"
-    );
+    throw new Error(dict().pushNotSupported);
   }
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    throw new Error("ไม่ได้รับอนุญาตให้แจ้งเตือน");
+    throw new Error(dict().pushDenied);
   }
 
   const registration = await navigator.serviceWorker.ready;
@@ -45,7 +45,7 @@ export async function subscribeToPush(): Promise<PushKeys> {
 
   const json = subscription.toJSON();
   if (!(json.endpoint && json.keys?.p256dh && json.keys?.auth)) {
-    throw new Error("อ่านคีย์การแจ้งเตือนไม่ได้");
+    throw new Error(dict().pushKeysFailed);
   }
   return {
     endpoint: json.endpoint,

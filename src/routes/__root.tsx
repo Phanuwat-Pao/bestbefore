@@ -1,9 +1,9 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { CircleHelp, History, ListChecks, Plus, Settings } from "lucide-react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
+import { HeaderPreferences } from "@/components/preferences";
 import { ReloadPrompt } from "@/components/reload-prompt";
-import { useSystemTheme } from "@/components/theme";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,13 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Dictionary } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
-import { cn } from "@/lib/utils";
 
 export const Route = createRootRoute({ component: Root });
 
 function Root() {
-  useSystemTheme();
   const { state } = useSession();
   return (
     <>
@@ -31,6 +31,7 @@ function Root() {
 
 function Gate() {
   const { state } = useSession();
+  const { t } = useI18n();
   switch (state.kind) {
     case "loading": {
       return (
@@ -39,7 +40,7 @@ function Gate() {
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
           <p className="text-muted-foreground text-center text-sm">
-            กำลังเข้าสู่ระบบด้วย LINE…
+            {t.loggingIn}
           </p>
         </div>
       );
@@ -52,12 +53,12 @@ function Gate() {
         <Centered>
           <Card className="w-full max-w-sm">
             <CardHeader>
-              <CardTitle>เกิดข้อผิดพลาด</CardTitle>
+              <CardTitle>{t.errorTitle}</CardTitle>
               <CardDescription>{state.message}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={state.retry} className="w-full">
-                ลองอีกครั้ง
+                {t.retry}
               </Button>
             </CardContent>
           </Card>
@@ -74,7 +75,7 @@ function Gate() {
   }
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
+function Centered({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh items-center justify-center p-4">
       {children}
@@ -83,26 +84,25 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 function NotMember({ retry }: { retry: () => void }) {
+  const { t } = useI18n();
   const addFriendUrl = import.meta.env.VITE_LINE_ADD_FRIEND_URL;
   return (
     <Centered>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>ยังไม่ได้เป็นสมาชิก</CardTitle>
-          <CardDescription>
-            บัญชี LINE นี้ยังไม่ได้เพิ่มบอท BestBefore เป็นเพื่อน เพิ่มเพื่อนก่อนแล้วกดลองอีกครั้ง
-          </CardDescription>
+          <CardTitle>{t.notMemberTitle}</CardTitle>
+          <CardDescription>{t.notMemberBody}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {addFriendUrl && (
             <Button asChild className="w-full">
               <a href={addFriendUrl} target="_blank" rel="noreferrer">
-                เพิ่มเพื่อน
+                {t.addFriend}
               </a>
             </Button>
           )}
           <Button variant="outline" className="w-full" onClick={retry}>
-            ลองอีกครั้ง
+            {t.retry}
           </Button>
         </CardContent>
       </Card>
@@ -110,31 +110,37 @@ function NotMember({ retry }: { retry: () => void }) {
   );
 }
 
+type NavKey = keyof Pick<
+  Dictionary,
+  "navList" | "navAdd" | "navHistory" | "navSettings" | "navHelp"
+>;
+
 const NAV: {
   to: "/" | "/add" | "/history" | "/settings" | "/help";
-  label: string;
+  key: NavKey;
   Icon: ComponentType<{ className?: string }>;
 }[] = [
-  { Icon: ListChecks, label: "รายการ", to: "/" },
-  { Icon: Plus, label: "เพิ่ม", to: "/add" },
-  { Icon: History, label: "ประวัติ", to: "/history" },
-  { Icon: Settings, label: "ตั้งค่า", to: "/settings" },
-  { Icon: CircleHelp, label: "ช่วย", to: "/help" },
+  { Icon: ListChecks, key: "navList", to: "/" },
+  { Icon: Plus, key: "navAdd", to: "/add" },
+  { Icon: History, key: "navHistory", to: "/history" },
+  { Icon: Settings, key: "navSettings", to: "/settings" },
+  { Icon: CircleHelp, key: "navHelp", to: "/help" },
 ];
 
 function Shell() {
+  const { t } = useI18n();
   return (
     <div className="bg-background min-h-dvh">
       <header className="bg-background/90 sticky top-0 z-30 border-b backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4">
+        <div className="mx-auto flex h-14 max-w-3xl items-center gap-4 px-4">
           <Link
             to="/"
             className="text-primary text-lg font-bold tracking-tight"
           >
-            BestBefore
+            {t.appName}
           </Link>
-          <nav className="hidden items-center gap-1 sm:flex">
-            {NAV.map(({ to, label, Icon }) => (
+          <nav className="ml-auto hidden items-center gap-1 sm:flex">
+            {NAV.map(({ to, key, Icon }) => (
               <Link
                 key={to}
                 to={to}
@@ -142,10 +148,13 @@ function Shell() {
                 className="text-muted-foreground hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
               >
                 <Icon className="size-4" />
-                {label}
+                {t[key]}
               </Link>
             ))}
           </nav>
+          <div className="ml-auto sm:ml-0">
+            <HeaderPreferences />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl px-4 py-4 pb-[calc(var(--tabbar-h)+1rem)] sm:pb-8">
@@ -153,18 +162,15 @@ function Shell() {
       </main>
       <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-30 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
         <ul className="grid h-15 grid-cols-5">
-          {NAV.map(({ to, label, Icon }) => (
+          {NAV.map(({ to, key, Icon }) => (
             <li key={to}>
               <Link
                 to={to}
                 activeOptions={{ exact: to === "/" }}
-                className={cn(
-                  "text-muted-foreground flex h-full flex-col items-center justify-center gap-0.5 text-[11px]",
-                  "data-[status=active]:text-primary"
-                )}
+                className="text-muted-foreground data-[status=active]:text-primary flex h-full flex-col items-center justify-center gap-0.5 text-[11px]"
               >
                 <Icon className="size-5" />
-                {label}
+                {t[key]}
               </Link>
             </li>
           ))}

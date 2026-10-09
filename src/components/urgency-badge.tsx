@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 import type { Urgency } from "../../convex/lib/dates";
-import { describeDaysLeft } from "../../convex/lib/dates";
 
 const TONE: Record<Urgency, string> = {
   expired: "bg-urgency-expired text-white",
@@ -21,9 +21,10 @@ export function UrgencyBadge({
   daysLeft: number | null;
   className?: string;
 }) {
+  const { daysLeft: describe } = useI18n();
   return (
     <Badge className={cn("border-transparent", TONE[urgency], className)}>
-      {describeDaysLeft(daysLeft)}
+      {describe(daysLeft)}
     </Badge>
   );
 }

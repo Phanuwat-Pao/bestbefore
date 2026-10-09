@@ -9,17 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Dictionary } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useReadySession } from "@/lib/session";
 
 import { api } from "../../convex/_generated/api";
 
 type Filter = "all" | "soon" | "expired" | "undated";
+type FilterKey = keyof Pick<
+  Dictionary,
+  "filterAll" | "filterSoon" | "filterExpired" | "filterUndated"
+>;
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "ทั้งหมด" },
-  { key: "soon", label: "ใกล้หมด" },
-  { key: "expired", label: "หมดแล้ว" },
-  { key: "undated", label: "ไม่มีวัน" },
+const FILTERS: { key: Filter; label: FilterKey }[] = [
+  { key: "all", label: "filterAll" },
+  { key: "soon", label: "filterSoon" },
+  { key: "expired", label: "filterExpired" },
+  { key: "undated", label: "filterUndated" },
 ];
 
 function parseFilter(value: unknown): Filter {
@@ -37,6 +43,7 @@ export const Route = createFileRoute("/")({
 });
 
 function ListPage() {
+  const { t } = useI18n();
   const { token } = useReadySession();
   const { filter = "all" } = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -80,12 +87,12 @@ function ListPage() {
 
   return (
     <Page
-      title="ของในบ้าน"
+      title={t.listTitle}
       aside={
         <Button asChild size="sm" className="sm:hidden">
           <Link to="/add">
             <Plus data-icon="inline-start" />
-            เพิ่ม
+            {t.navAdd}
           </Link>
         </Button>
       }
@@ -94,7 +101,7 @@ function ListPage() {
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           type="search"
-          placeholder="ค้นหาชื่อของ"
+          placeholder={t.searchPlaceholder}
           className="h-10 pl-9"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -110,7 +117,7 @@ function ListPage() {
         <TabsList className="grid w-full grid-cols-4">
           {FILTERS.map((f) => (
             <TabsTrigger key={f.key} value={f.key}>
-              {f.label}
+              {t[f.label]}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -126,22 +133,22 @@ function ListPage() {
         <EmptyState>
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-3">
-              <p>ยังไม่มีของในรายการ</p>
+              <p>{t.emptyList}</p>
               <Button asChild>
                 <Link to="/add">
                   <Plus data-icon="inline-start" />
-                  เพิ่มของชิ้นแรก
+                  {t.addFirst}
                 </Link>
               </Button>
             </div>
           ) : (
-            "ไม่มีรายการที่ตรงกับตัวกรองนี้"
+            t.emptyFilter
           )}
         </EmptyState>
       ) : (
         <>
           <p className="text-muted-foreground text-sm">
-            {visible.length} รายการ
+            {t.itemCount(visible.length)}
           </p>
           <ul className="flex flex-col gap-2">
             {visible.map((item) => (
@@ -158,10 +165,10 @@ function ListPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => markUsed({ itemId: item.id, token })}
-                    aria-label={`ใช้แล้ว ${item.name}`}
+                    aria-label={t.usedAria(item.name)}
                   >
                     <Check data-icon="inline-start" />
-                    ใช้แล้ว
+                    {t.used}
                   </Button>
                 }
               />

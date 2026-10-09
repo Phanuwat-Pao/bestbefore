@@ -3,9 +3,9 @@ import { ShoppingBasket } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { UrgencyBadge } from "@/components/urgency-badge";
+import { useI18n } from "@/lib/i18n";
 
 import type { IsoDate, Urgency } from "../../convex/lib/dates";
-import { formatThai } from "../../convex/lib/dates";
 
 export interface ItemCardProps {
   id: string;
@@ -19,6 +19,7 @@ export interface ItemCardProps {
 }
 
 export function ItemCard(props: ItemCardProps) {
+  const { t, fmtDate } = useI18n();
   return (
     <li className="bg-card flex items-center gap-3 rounded-xl border p-3 shadow-xs">
       <Link
@@ -50,7 +51,11 @@ export function ItemCard(props: ItemCardProps) {
         </Link>
         <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
           <UrgencyBadge urgency={props.urgency} daysLeft={props.daysLeft} />
-          {props.expiresOn && <span>หมดอายุ {formatThai(props.expiresOn)}</span>}
+          {props.expiresOn && (
+            <span>
+              {t.expiresPrefix} {fmtDate(props.expiresOn)}
+            </span>
+          )}
           {props.subtitle && <span>{props.subtitle}</span>}
         </div>
       </div>

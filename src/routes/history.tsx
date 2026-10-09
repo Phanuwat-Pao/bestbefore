@@ -6,6 +6,7 @@ import { ItemCard } from "@/components/item-card";
 import { EmptyState, Page } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/lib/i18n";
 import { useReadySession } from "@/lib/session";
 
 import { api } from "../../convex/_generated/api";
@@ -13,22 +14,22 @@ import { api } from "../../convex/_generated/api";
 export const Route = createFileRoute("/history")({ component: HistoryPage });
 
 function HistoryPage() {
+  const { t, locale } = useI18n();
   const { token } = useReadySession();
   const rows = useQuery(api.items.history, { token });
   const restore = useMutation(api.items.restore);
+  const dateLocale = locale === "th" ? "th-TH" : "en-GB";
 
   return (
-    <Page title="ประวัติ">
-      <p className="text-muted-foreground text-sm">
-        ของที่ใช้แล้วหรือลบแล้ว กู้คืนได้ภายใน 30 วัน หลังจากนั้นระบบจะลบถาวรพร้อมรูป
-      </p>
+    <Page title={t.historyTitle}>
+      <p className="text-muted-foreground text-sm">{t.historyHint}</p>
       {rows === undefined ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-22 w-full" />
           <Skeleton className="h-22 w-full" />
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState>ยังไม่มีประวัติ</EmptyState>
+        <EmptyState>{t.historyEmpty}</EmptyState>
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((row) => (
@@ -40,9 +41,9 @@ function HistoryPage() {
               daysLeft={row.daysLeft}
               urgency={row.urgency}
               thumbnailUrl={row.thumbnailUrl}
-              subtitle={`${row.status === "used" ? "ใช้แล้ว" : "ลบแล้ว"}${
+              subtitle={`${row.status === "used" ? t.statusUsed : t.statusDeleted}${
                 row.archivedAt
-                  ? ` ${new Date(row.archivedAt).toLocaleDateString("th-TH")}`
+                  ? ` ${new Date(row.archivedAt).toLocaleDateString(dateLocale)}`
                   : ""
               }`}
               trailing={
@@ -50,10 +51,10 @@ function HistoryPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => restore({ itemId: row.id, token })}
-                  aria-label={`กู้คืน ${row.name}`}
+                  aria-label={t.restoreAria(row.name)}
                 >
                   <Undo2 data-icon="inline-start" />
-                  กู้คืน
+                  {t.restore}
                 </Button>
               }
             />

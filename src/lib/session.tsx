@@ -15,6 +15,7 @@ import {
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { dict } from "./i18n";
 import {
   clearReloginFlag,
   getLiffIdToken,
@@ -117,7 +118,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             if (!retrying) {
               setFailure({
                 kind: "error",
-                message: `เข้าสู่ระบบไม่สำเร็จ: ${result.reason}`,
+                message: dict().loginFailed(result.reason),
               });
             }
             return;

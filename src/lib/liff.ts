@@ -10,7 +10,7 @@ let initPromise: Promise<void> | null = null;
 function liffId(): string {
   const id = import.meta.env.VITE_LIFF_ID;
   if (!id) {
-    throw new Error("ยังไม่ได้ตั้งค่า VITE_LIFF_ID");
+    throw new Error("Missing VITE_LIFF_ID");
   }
   return id;
 }

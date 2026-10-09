@@ -3,7 +3,9 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
+import { I18nProvider } from "./lib/i18n";
 import { SessionProvider } from "./lib/session";
+import { ThemeProvider } from "./lib/theme";
 import { routeTree } from "./routeTree.gen";
 
 import "./index.css";
@@ -28,10 +30,14 @@ if (!rootElement) {
 }
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <ConvexProvider client={convex}>
-      <SessionProvider>
-        <RouterProvider router={router} />
-      </SessionProvider>
-    </ConvexProvider>
+    <ThemeProvider>
+      <I18nProvider>
+        <ConvexProvider client={convex}>
+          <SessionProvider>
+            <RouterProvider router={router} />
+          </SessionProvider>
+        </ConvexProvider>
+      </I18nProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

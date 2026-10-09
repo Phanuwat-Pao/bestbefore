@@ -77,11 +77,38 @@ const THAI_MONTHS = [
   "ธ.ค.",
 ];
 
+const EN_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export type Locale = "th" | "en";
+
 /** `2026-10-15` → `15 ต.ค. 2569` (Buddhist era, as printed on Thai packaging). */
 export function formatThai(date: IsoDate): string {
   const [y, m, d] = date.split("-").map(Number);
   const month = THAI_MONTHS[(m ?? 1) - 1] ?? "";
   return `${d} ${month} ${(y ?? 0) + 543}`;
+}
+
+/** Locale-aware date: Thai with BE year, English with the Gregorian year. */
+export function formatDate(date: IsoDate, locale: Locale = "th"): string {
+  if (locale === "th") {
+    return formatThai(date);
+  }
+  const [y, m, d] = date.split("-").map(Number);
+  const month = EN_MONTHS[(m ?? 1) - 1] ?? "";
+  return `${d} ${month} ${y ?? 0}`;
 }
 
 export type Urgency = "expired" | "today" | "soon" | "ok" | "unknown";
@@ -106,8 +133,26 @@ export function urgencyOf(
   return "ok";
 }
 
-/** Short Thai phrase for the list rows: "อีก 3 วัน", "พรุ่งนี้", "หมดอายุแล้ว 2 วัน". */
-export function describeDaysLeft(daysLeft: number | null): string {
+/** Short phrase for the list rows: "อีก 3 วัน", "พรุ่งนี้", "หมดอายุแล้ว 2 วัน". */
+export function describeDaysLeft(
+  daysLeft: number | null,
+  locale: Locale = "th"
+): string {
+  if (locale === "en") {
+    if (daysLeft === null) {
+      return "No expiry date";
+    }
+    if (daysLeft < 0) {
+      return `Expired ${-daysLeft} day${-daysLeft === 1 ? "" : "s"} ago`;
+    }
+    if (daysLeft === 0) {
+      return "Expires today";
+    }
+    if (daysLeft === 1) {
+      return "Tomorrow";
+    }
+    return `${daysLeft} days left`;
+  }
   if (daysLeft === null) {
     return "ยังไม่ระบุวันหมดอายุ";
   }
