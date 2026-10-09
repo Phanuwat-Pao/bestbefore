@@ -128,6 +128,39 @@ async function reply(
 
 // ---- Members (1:1) ----
 
+/**
+ * Make sure a LINE user is a following member. Called on `follow`, and on any
+ * 1:1 message: being able to message the OA proves friendship, which covers
+ * people who followed before the webhook existed (the channel owner, for one).
+ */
+async function ensureMember(
+  ctx: MutationCtx,
+  lineUserId: string
+): Promise<{ memberId: Id<"members">; isNew: boolean }> {
+  const existing = await ctx.db
+    .query("members")
+    .withIndex("by_lineUserId", (q) => q.eq("lineUserId", lineUserId))
+    .unique();
+  if (existing) {
+    if (existing.status !== "following") {
+      await ctx.db.patch(existing._id, {
+        followedAt: Date.now(),
+        status: "following",
+      });
+    }
+    return { isNew: false, memberId: existing._id };
+  }
+  const memberId = await ctx.db.insert("members", {
+    followedAt: Date.now(),
+    lineUserId,
+    status: "following",
+  });
+  await ctx.scheduler.runAfter(0, internal.line.send.resolveProfile, {
+    memberId,
+  });
+  return { isNew: true, memberId };
+}
+
 async function onFollow(
   ctx: MutationCtx,
   source: ChatSource,
@@ -136,27 +169,13 @@ async function onFollow(
   if (source.kind !== "user") {
     return;
   }
-  const existing = await ctx.db
-    .query("members")
-    .withIndex("by_lineUserId", (q) => q.eq("lineUserId", source.userId))
-    .unique();
-  let memberId: Id<"members">;
-  if (existing) {
-    memberId = existing._id;
-    await ctx.db.patch(existing._id, {
-      followedAt: Date.now(),
-      status: "following",
-    });
-  } else {
-    memberId = await ctx.db.insert("members", {
-      followedAt: Date.now(),
-      lineUserId: source.userId,
-      status: "following",
+  const member = await ensureMember(ctx, source.userId);
+  if (!member.isNew) {
+    await ctx.db.patch(member.memberId, { followedAt: Date.now() });
+    await ctx.scheduler.runAfter(0, internal.line.send.resolveProfile, {
+      memberId: member.memberId,
     });
   }
-  await ctx.scheduler.runAfter(0, internal.line.send.resolveProfile, {
-    memberId,
-  });
   await reply(ctx, replyToken, [welcomeMessage(liffUrl())]);
 }
 
@@ -270,6 +289,12 @@ async function onMessage(
   const { message, replyToken, source } = event;
 
   if (source.kind === "user") {
+    const member = await ensureMember(ctx, source.userId);
+    if (member.isNew) {
+      // First contact without a stored follow event: greet instead of parsing.
+      await reply(ctx, replyToken, [welcomeMessage(liffUrl())]);
+      return;
+    }
     if (message.type === "text") {
       await respondToCommand(
         ctx,
