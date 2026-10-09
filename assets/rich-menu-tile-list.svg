@@ -1,14 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="843" height="843" viewBox="0 0 843 843">
   <rect width="843" height="843" fill="#0EA5E9"/>
-  <g transform="translate(421 330) scale(1.05)" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
-    <!-- clipboard -->
+  <g transform="translate(421 265) scale(1.3)" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
     <rect x="-130" y="-120" width="260" height="280" rx="30"/>
     <rect x="-60" y="-150" width="120" height="60" rx="18" fill="#0EA5E9"/>
-    <!-- three rows with check marks -->
     <path d="M-80 -30 L-60 -10 L-30 -45"/><line x1="0" y1="-25" x2="90" y2="-25"/>
     <path d="M-80 40 L-60 60 L-30 25"/><line x1="0" y1="45" x2="90" y2="45"/>
     <path d="M-80 110 L-60 130 L-30 95"/><line x1="0" y1="115" x2="90" y2="115"/>
   </g>
-  <text x="421" y="640" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="120" fill="#ffffff">รายการ</text>
-  <text x="421" y="730" text-anchor="middle" font-family="Sarabun" font-size="46" fill="#E0F2FE">ดูของทั้งหมด เรียงใกล้หมดอายุก่อน</text>
+  <text x="421" y="680" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="210" fill="#ffffff">รายการ</text>
+  <text x="421" y="795" text-anchor="middle" font-family="Sarabun" font-size="64" fill="#E0F2FE">เรียงใกล้หมดอายุก่อน</text>
 </svg>
