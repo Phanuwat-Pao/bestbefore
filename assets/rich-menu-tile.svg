@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="843" height="843" viewBox="0 0 843 843">
   <rect width="843" height="843" fill="#16A34A"/>
-  <g transform="translate(421 330) scale(1.35)">
+  <g transform="translate(421 290) scale(1.72)">
     <rect x="-150" y="-80" width="300" height="200" rx="34" fill="none" stroke="#ffffff" stroke-width="26"/>
     <path d="M-60 -80 L-35 -125 L35 -125 L60 -80" fill="none" stroke="#ffffff" stroke-width="26" stroke-linejoin="round"/>
     <circle cx="0" cy="20" r="62" fill="none" stroke="#ffffff" stroke-width="26"/>
@@ -8,5 +8,5 @@
     <rect x="118" y="-92" width="64" height="24" rx="6" fill="#16A34A"/>
     <rect x="138" y="-112" width="24" height="64" rx="6" fill="#16A34A"/>
   </g>
-  <text x="421" y="730" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="170" fill="#ffffff">เพิ่มของ</text>
+  <text x="421" y="790" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="215" fill="#ffffff">เพิ่มของ</text>
 </svg>
