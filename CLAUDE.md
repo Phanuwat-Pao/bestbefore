@@ -6,7 +6,9 @@ Hard rules from the owner:
 
 - Bot replies only. Never add a LINE push/multicast/broadcast or a cron that sends to LINE.
 - AI is Gemini Flash-Lite on the free tier only. No fallback provider, no paid model.
-- Bot replies and the web UI are Thai. Dates are `YYYY-MM-DD` strings; "today" is Asia/Bangkok.
+- The bot replies in Thai only. The web UI is Thai by default with an English option (decided
+  2026-10-09: no per-member or per-group bot language). Dates are `YYYY-MM-DD` strings; "today"
+  is Asia/Bangkok.
 - Parity: anything the bot can do, the web can do, and the reverse. Do not defer matrix items.
 
 Layout: `convex/line/` (webhook ingest + reply), `convex/push/` (Web Push), `convex/lib/` (pure

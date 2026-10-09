@@ -38,8 +38,10 @@ and any LINE message that is not a reply to a webhook event.
 - **C-2 Free AI.** The only model provider is Google AI Studio's free tier, model
   `gemini-3.5-flash-lite` (overridable by env). No fallback provider. When it fails or is
   throttled the user types the date by hand.
-- **C-3 Thai.** Bot replies and the web UI are in Thai. Dates render as Buddhist-era
-  (`15 ต.ค. 2569`) with a relative phrase (`อีก 3 วัน`).
+- **C-3 Thai bot, bilingual web.** Bot replies are Thai only; a shared group chat gets one
+  language regardless of who asks. The web UI defaults to Thai and offers English per device
+  (`src/lib/i18n.tsx`), with dates as Buddhist-era (`15 ต.ค. 2569`) or Gregorian (`15 Oct
+  2026`) to match, plus a relative phrase (`อีก 3 วัน` / `3 days left`).
 - **C-4 Calendar dates.** An expiry is a `YYYY-MM-DD` string. "Today" is computed in
   Asia/Bangkok (fixed UTC+7). No instants, no midnight bugs.
 - **C-5 One pantry.** A deployment is one household. Membership is "currently follows the
