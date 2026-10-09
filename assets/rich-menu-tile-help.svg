@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="843" height="843" viewBox="0 0 843 843">
+  <rect width="843" height="843" fill="#F59E0B"/>
+  <g transform="translate(421 330) scale(1.05)" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round">
+    <circle cx="0" cy="0" r="150"/>
+    <path d="M-50 -40 A50 50 0 1 1 25 15 Q0 30 0 60"/>
+    <circle cx="0" cy="105" r="8" fill="#ffffff"/>
+  </g>
+  <text x="421" y="640" text-anchor="middle" font-family="Sarabun" font-weight="bold" font-size="120" fill="#ffffff">วิธีใช้</text>
+  <text x="421" y="730" text-anchor="middle" font-family="Sarabun" font-size="46" fill="#FEF3C7">คำสั่งในกลุ่มและการแจ้งเตือน</text>
+</svg>
