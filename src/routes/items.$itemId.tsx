@@ -1,15 +1,33 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { Check, Loader2, Trash2, Undo2, X } from "lucide-react";
 import { useState } from "react";
+
+import { Page } from "@/components/page";
+import { PhotoPicker } from "@/components/photo-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { UrgencyBadge } from "@/components/urgency-badge";
+import { prepareImage } from "@/lib/image";
+import { useReadySession } from "@/lib/session";
+import { uploadToConvex } from "@/lib/upload";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { formatThai, parseIsoDate } from "../../convex/lib/dates";
-import { UrgencyBadge } from "../components/item-card";
-import { PhotoPicker } from "../components/photo-picker";
-import { prepareImage } from "../lib/image";
-import { useReadySession } from "../lib/session";
-import { uploadToConvex } from "../lib/upload";
 
 export const Route = createFileRoute("/items/$itemId")({ component: ItemPage });
 
@@ -21,14 +39,23 @@ function ItemPage() {
   const item = useQuery(api.items.get, { itemId, token });
 
   if (item === undefined) {
-    return <p className="muted">กำลังโหลด…</p>;
+    return (
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
   }
   if (item === null) {
     return (
-      <div className="card">
-        <p className="muted">ไม่พบรายการนี้</p>
-        <Link to="/">กลับไปหน้ารายการ</Link>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-start gap-3">
+          <p className="text-muted-foreground">ไม่พบรายการนี้</p>
+          <Button asChild variant="outline">
+            <Link to="/">กลับไปหน้ารายการ</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   return <ItemEditor key={item.id} item={item} token={token} />;
@@ -113,183 +140,232 @@ function ItemEditor({ item, token }: { item: ItemDetail; token: string }) {
       await navigate({ to: "/" });
     });
 
+  const onRestore = () =>
+    run("กู้คืนแล้ว", async () => {
+      await restore({ itemId: item.id, token });
+    });
+
   const onRemovePhoto = (photoId: Id<"photos">) =>
     run("ลบรูปแล้ว", async () => {
       await removePhoto({ photoId, token });
       setPhotoToRemove(null);
     });
 
-  const onRestore = () =>
-    run("กู้คืนแล้ว", async () => {
-      await restore({ itemId: item.id, token });
-    });
-
   const photosLeft = Math.max(0, MAX_PHOTOS - item.photos.length);
 
   return (
-    <section className="stack">
-      <div className="row space-between">
-        <h1>{item.name}</h1>
-        <UrgencyBadge urgency={item.urgency} daysLeft={item.daysLeft} />
-      </div>
+    <Page
+      title={item.name}
+      aside={
+        <UrgencyBadge
+          urgency={item.urgency}
+          daysLeft={item.daysLeft}
+          className="shrink-0"
+        />
+      }
+    >
       {item.status !== "active" && (
-        <div className="card">
-          <p className="muted">
-            รายการนี้{item.status === "used" ? "ใช้แล้ว" : "ถูกลบแล้ว"}
-            {item.archivedAt &&
-              ` เมื่อ ${new Date(item.archivedAt).toLocaleDateString("th-TH")}`}
-          </p>
-          <button type="button" onClick={onRestore} disabled={busy}>
-            กู้คืนกลับเข้ารายการ
-          </button>
-        </div>
+        <Alert>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              รายการนี้{item.status === "used" ? "ใช้แล้ว" : "ถูกลบแล้ว"}
+              {item.archivedAt &&
+                ` เมื่อ ${new Date(item.archivedAt).toLocaleDateString("th-TH")}`}
+            </span>
+            <Button size="sm" onClick={onRestore} disabled={busy}>
+              <Undo2 data-icon="inline-start" />
+              กู้คืน
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
-      {message && <p className="muted">{message}</p>}
+      {message && <p className="text-muted-foreground text-sm">{message}</p>}
 
       {item.photos.length > 0 && (
-        <div className="gallery">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {item.photos.map((photo) => (
-            <div key={photo.photoId} className="gallery-cell">
+            <div
+              key={photo.photoId}
+              className="bg-muted relative aspect-square overflow-hidden rounded-lg"
+            >
               {photo.url ? (
                 <a href={photo.url} target="_blank" rel="noreferrer">
-                  <img src={photo.url} alt="" />
+                  <img
+                    src={photo.url}
+                    alt=""
+                    className="size-full object-cover"
+                  />
                 </a>
               ) : (
-                <div className="thumb-empty">?</div>
-              )}
-              {photoToRemove === photo.photoId ? (
-                <div className="gallery-confirm">
-                  <button
-                    type="button"
-                    className="danger"
-                    disabled={busy}
-                    onClick={() => onRemovePhoto(photo.photoId)}
-                  >
-                    ลบรูป
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost"
-                    onClick={() => setPhotoToRemove(null)}
-                  >
-                    ยกเลิก
-                  </button>
+                <div className="text-muted-foreground flex size-full items-center justify-center">
+                  ?
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="gallery-remove"
-                  aria-label="ลบรูปนี้"
-                  disabled={busy}
-                  onClick={() => setPhotoToRemove(photo.photoId)}
-                >
-                  ✕
-                </button>
               )}
+              <Button
+                size="icon-sm"
+                variant="secondary"
+                className="absolute top-1 right-1 rounded-full bg-black/60 text-white hover:bg-black/80"
+                aria-label="ลบรูปนี้"
+                disabled={busy}
+                onClick={() => setPhotoToRemove(photo.photoId)}
+              >
+                <X />
+              </Button>
             </div>
           ))}
         </div>
       )}
 
-      <div className="card stack">
-        <label htmlFor="name">ชื่อของ</label>
-        <input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <label htmlFor="expiresOn">วันหมดอายุ</label>
-        <input
-          id="expiresOn"
-          type="date"
-          value={expiresOn}
-          onChange={(e) => setExpiresOn(e.target.value)}
-        />
-        <p className="muted small">
-          {item.expiresOn
-            ? `ปัจจุบัน: ${formatThai(item.expiresOn)}`
-            : "ยังไม่ระบุวันหมดอายุ"}
-        </p>
-        <label htmlFor="note">หมายเหตุ</label>
-        <textarea
-          id="note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        {item.guess && (
-          <p className="muted small">
-            AI อ่านได้: {item.guess.name ?? "-"}
-            {item.guess.expiresOn && ` · ${item.guess.expiresOn}`}
-            {item.guess.note && ` · ${item.guess.note}`}
-          </p>
-        )}
-        <div className="row">
-          <button
-            type="button"
+      <Card>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">ชื่อของ</Label>
+            <Input
+              id="name"
+              className="h-11 text-base"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="expiresOn">วันหมดอายุ</Label>
+            <Input
+              id="expiresOn"
+              type="date"
+              className="h-11 text-base"
+              value={expiresOn}
+              onChange={(e) => setExpiresOn(e.target.value)}
+            />
+            <p className="text-muted-foreground text-sm">
+              {item.expiresOn
+                ? `ปัจจุบัน: ${formatThai(item.expiresOn)}`
+                : "ยังไม่ระบุวันหมดอายุ"}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="note">หมายเหตุ</Label>
+            <Textarea
+              id="note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+          {item.guess && (
+            <p className="text-muted-foreground text-xs">
+              AI อ่านได้: {item.guess.name ?? "-"}
+              {item.guess.expiresOn && ` · ${item.guess.expiresOn}`}
+              {item.guess.note && ` · ${item.guess.note}`}
+            </p>
+          )}
+          <Button
+            size="lg"
+            className="h-11"
             onClick={save}
             disabled={busy || !dirty || name.trim() === ""}
           >
             บันทึกการแก้ไข
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
 
       {photosLeft > 0 && (
-        <div className="card stack">
-          <h2>เพิ่มรูป</h2>
-          <PhotoPicker
-            files={newFiles}
-            onChange={setNewFiles}
-            max={photosLeft}
-            disabled={busy}
-          />
-          <button
-            type="button"
-            onClick={uploadNew}
-            disabled={busy || newFiles.length === 0}
-          >
-            อัปโหลด
-          </button>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>เพิ่มรูป</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <PhotoPicker
+              files={newFiles}
+              onChange={setNewFiles}
+              max={photosLeft}
+              disabled={busy}
+            />
+            <Button
+              onClick={uploadNew}
+              disabled={busy || newFiles.length === 0}
+            >
+              {busy && (
+                <Loader2 className="animate-spin" data-icon="inline-start" />
+              )}
+              อัปโหลด
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
-      {item.status === "active" && !confirmingDelete && (
-        <div className="row">
-          <button type="button" onClick={onUsed} disabled={busy}>
-            ✅ ใช้แล้ว
-          </button>
-          <button
-            type="button"
-            className="danger"
+      {item.status === "active" && (
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            size="lg"
+            className="h-12 text-base"
+            onClick={onUsed}
+            disabled={busy}
+          >
+            <Check data-icon="inline-start" />
+            ใช้แล้ว
+          </Button>
+          <Button
+            size="lg"
+            variant="destructive"
+            className="h-12 text-base"
             onClick={() => setConfirmingDelete(true)}
             disabled={busy}
           >
-            🗑️ ลบ
-          </button>
+            <Trash2 data-icon="inline-start" />
+            ลบ
+          </Button>
         </div>
       )}
-      {item.status === "active" && confirmingDelete && (
-        <div className="card stack">
-          <p>ลบ "{item.name}" ออกจากรายการ? กู้คืนได้จากหน้าประวัติภายใน 30 วัน</p>
-          <div className="row">
-            <button
-              type="button"
-              className="danger"
+
+      <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ลบ "{item.name}"?</DialogTitle>
+            <DialogDescription>
+              กู้คืนได้จากหน้าประวัติภายใน 30 วัน หลังจากนั้นจะถูกลบถาวรพร้อมรูป
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingDelete(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              variant="destructive"
               onClick={onDeleteConfirmed}
               disabled={busy}
             >
               ยืนยันลบ
-            </button>
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => setConfirmingDelete(false)}
-            >
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={photoToRemove !== null}
+        onOpenChange={(open) => !open && setPhotoToRemove(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ลบรูปนี้?</DialogTitle>
+            <DialogDescription>รูปจะถูกลบทันทีและกู้คืนไม่ได้</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPhotoToRemove(null)}>
               ยกเลิก
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={busy}
+              onClick={() => photoToRemove && onRemovePhoto(photoToRemove)}
+            >
+              ลบรูป
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Page>
   );
 }

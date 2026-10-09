@@ -24,6 +24,25 @@ import {
 
 const TOKEN_KEY = "bestbefore.session";
 
+/**
+ * Dev only: `?devToken=<session token>` seeds the stored session so the UI can
+ * be opened without LINE Login (screenshot runs, desktop dev). Stripped in
+ * production builds.
+ */
+function readInitialToken(): string {
+  if (import.meta.env.DEV) {
+    const url = new URL(window.location.href);
+    const devToken = url.searchParams.get("devToken");
+    if (devToken) {
+      localStorage.setItem(TOKEN_KEY, devToken);
+      url.searchParams.delete("devToken");
+      window.history.replaceState(null, "", url.toString());
+      return devToken;
+    }
+  }
+  return localStorage.getItem(TOKEN_KEY) ?? "";
+}
+
 export interface Member {
   id: Id<"members">;
   displayName: string | null;
@@ -56,9 +75,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 type Failure = { kind: "notMember" } | { kind: "error"; message: string };
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string>(
-    () => localStorage.getItem(TOKEN_KEY) ?? ""
-  );
+  const [token, setToken] = useState<string>(readInitialToken);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [attempt, setAttempt] = useState(0);
   const inFlight = useRef(false);

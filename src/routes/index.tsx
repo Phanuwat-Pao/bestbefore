@@ -1,10 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { Check, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ItemCard } from "@/components/item-card";
+import { EmptyState, Page } from "@/components/page";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useReadySession } from "@/lib/session";
+
 import { api } from "../../convex/_generated/api";
-import { ItemCard } from "../components/item-card";
-import { useReadySession } from "../lib/session";
 
 type Filter = "all" | "soon" | "expired" | "undated";
 
@@ -12,7 +19,7 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "ทั้งหมด" },
   { key: "soon", label: "ใกล้หมด" },
   { key: "expired", label: "หมดแล้ว" },
-  { key: "undated", label: "ยังไม่ระบุวัน" },
+  { key: "undated", label: "ไม่มีวัน" },
 ];
 
 function parseFilter(value: unknown): Filter {
@@ -72,65 +79,96 @@ function ListPage() {
   }, [items, filter, search]);
 
   return (
-    <section className="stack">
-      <div className="row space-between">
-        <h1>ของในบ้าน</h1>
-        {items && <span className="muted">{items.length} รายการ</span>}
+    <Page
+      title="ของในบ้าน"
+      aside={
+        <Button asChild size="sm" className="sm:hidden">
+          <Link to="/add">
+            <Plus data-icon="inline-start" />
+            เพิ่ม
+          </Link>
+        </Button>
+      }
+    >
+      <div className="relative">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <Input
+          type="search"
+          placeholder="ค้นหาชื่อของ"
+          className="h-10 pl-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
-      <input
-        type="search"
-        placeholder="ค้นหาชื่อของ"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <div className="chips">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            className={filter === f.key ? "chip active" : "chip"}
-            onClick={() =>
-              navigate({ search: f.key === "all" ? {} : { filter: f.key } })
-            }
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-      {items === undefined ? (
-        <p className="muted">กำลังโหลด…</p>
-      ) : visible.length === 0 ? (
-        <div className="card">
-          <p className="muted">
-            {items.length === 0
-              ? "ยังไม่มีของในรายการ กดเพิ่มเพื่อถ่ายรูปของชิ้นแรก"
-              : "ไม่มีรายการที่ตรงกับตัวกรองนี้"}
-          </p>
-        </div>
-      ) : (
-        <ul className="list">
-          {visible.map((item) => (
-            <ItemCard
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              expiresOn={item.expiresOn}
-              daysLeft={item.daysLeft}
-              urgency={item.urgency}
-              thumbnailUrl={item.thumbnailUrl}
-              trailing={
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={() => markUsed({ itemId: item.id, token })}
-                >
-                  ใช้แล้ว
-                </button>
-              }
-            />
+      <Tabs
+        value={filter}
+        onValueChange={(value) => {
+          const next = parseFilter(value);
+          navigate({ search: next === "all" ? {} : { filter: next } });
+        }}
+      >
+        <TabsList className="grid w-full grid-cols-4">
+          {FILTERS.map((f) => (
+            <TabsTrigger key={f.key} value={f.key}>
+              {f.label}
+            </TabsTrigger>
           ))}
-        </ul>
+        </TabsList>
+      </Tabs>
+
+      {items === undefined ? (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-22 w-full" />
+          <Skeleton className="h-22 w-full" />
+          <Skeleton className="h-22 w-full" />
+        </div>
+      ) : visible.length === 0 ? (
+        <EmptyState>
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center gap-3">
+              <p>ยังไม่มีของในรายการ</p>
+              <Button asChild>
+                <Link to="/add">
+                  <Plus data-icon="inline-start" />
+                  เพิ่มของชิ้นแรก
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            "ไม่มีรายการที่ตรงกับตัวกรองนี้"
+          )}
+        </EmptyState>
+      ) : (
+        <>
+          <p className="text-muted-foreground text-sm">
+            {visible.length} รายการ
+          </p>
+          <ul className="flex flex-col gap-2">
+            {visible.map((item) => (
+              <ItemCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                expiresOn={item.expiresOn}
+                daysLeft={item.daysLeft}
+                urgency={item.urgency}
+                thumbnailUrl={item.thumbnailUrl}
+                trailing={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => markUsed({ itemId: item.id, token })}
+                    aria-label={`ใช้แล้ว ${item.name}`}
+                  >
+                    <Check data-icon="inline-start" />
+                    ใช้แล้ว
+                  </Button>
+                }
+              />
+            ))}
+          </ul>
+        </>
       )}
-    </section>
+    </Page>
   );
 }

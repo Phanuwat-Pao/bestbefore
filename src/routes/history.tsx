@@ -1,9 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { Undo2 } from "lucide-react";
+
+import { ItemCard } from "@/components/item-card";
+import { EmptyState, Page } from "@/components/page";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useReadySession } from "@/lib/session";
 
 import { api } from "../../convex/_generated/api";
-import { ItemCard } from "../components/item-card";
-import { useReadySession } from "../lib/session";
 
 export const Route = createFileRoute("/history")({ component: HistoryPage });
 
@@ -13,19 +18,19 @@ function HistoryPage() {
   const restore = useMutation(api.items.restore);
 
   return (
-    <section className="stack">
-      <h1>ประวัติ</h1>
-      <p className="muted small">
+    <Page title="ประวัติ">
+      <p className="text-muted-foreground text-sm">
         ของที่ใช้แล้วหรือลบแล้ว กู้คืนได้ภายใน 30 วัน หลังจากนั้นระบบจะลบถาวรพร้อมรูป
       </p>
       {rows === undefined ? (
-        <p className="muted">กำลังโหลด…</p>
-      ) : rows.length === 0 ? (
-        <div className="card">
-          <p className="muted">ยังไม่มีประวัติ</p>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-22 w-full" />
+          <Skeleton className="h-22 w-full" />
         </div>
+      ) : rows.length === 0 ? (
+        <EmptyState>ยังไม่มีประวัติ</EmptyState>
       ) : (
-        <ul className="list">
+        <ul className="flex flex-col gap-2">
           {rows.map((row) => (
             <ItemCard
               key={row.id}
@@ -41,18 +46,20 @@ function HistoryPage() {
                   : ""
               }`}
               trailing={
-                <button
-                  type="button"
-                  className="ghost"
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => restore({ itemId: row.id, token })}
+                  aria-label={`กู้คืน ${row.name}`}
                 >
+                  <Undo2 data-icon="inline-start" />
                   กู้คืน
-                </button>
+                </Button>
               }
             />
           ))}
         </ul>
       )}
-    </section>
+    </Page>
   );
 }

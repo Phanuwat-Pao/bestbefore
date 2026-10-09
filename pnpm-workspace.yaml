@@ -10,3 +10,5 @@ allowBuilds:
   esbuild: true
   lefthook: true
   protobufjs: true
+minimumReleaseAgeExclude:
+    - lucide-react@1.53.0

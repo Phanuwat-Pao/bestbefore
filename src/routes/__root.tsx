@@ -1,11 +1,25 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { CircleHelp, History, ListChecks, Plus, Settings } from "lucide-react";
+import type { ComponentType } from "react";
 
-import { ReloadPrompt } from "../components/reload-prompt";
-import { useSession } from "../lib/session";
+import { ReloadPrompt } from "@/components/reload-prompt";
+import { useSystemTheme } from "@/components/theme";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/lib/session";
+import { cn } from "@/lib/utils";
 
 export const Route = createRootRoute({ component: Root });
 
 function Root() {
+  useSystemTheme();
   const { state } = useSession();
   return (
     <>
@@ -19,20 +33,35 @@ function Gate() {
   const { state } = useSession();
   switch (state.kind) {
     case "loading": {
-      return <div className="center muted">กำลังเข้าสู่ระบบด้วย LINE…</div>;
+      return (
+        <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-3 p-4">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <p className="text-muted-foreground text-center text-sm">
+            กำลังเข้าสู่ระบบด้วย LINE…
+          </p>
+        </div>
+      );
     }
     case "notMember": {
       return <NotMember retry={state.retry} />;
     }
     case "error": {
       return (
-        <div className="center">
-          <div className="card">
-            <h2>เกิดข้อผิดพลาด</h2>
-            <p className="muted">{state.message}</p>
-            <button onClick={state.retry}>ลองอีกครั้ง</button>
-          </div>
-        </div>
+        <Centered>
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle>เกิดข้อผิดพลาด</CardTitle>
+              <CardDescription>{state.message}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={state.retry} className="w-full">
+                ลองอีกครั้ง
+              </Button>
+            </CardContent>
+          </Card>
+        </Centered>
       );
     }
     case "ready": {
@@ -45,64 +74,101 @@ function Gate() {
   }
 }
 
-function NotMember({ retry }: { retry: () => void }) {
-  const addFriendUrl = import.meta.env.VITE_LINE_ADD_FRIEND_URL;
+function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div className="center">
-      <div className="card">
-        <h2>ยังไม่ได้เป็นสมาชิก</h2>
-        <p className="muted">
-          บัญชี LINE นี้ยังไม่ได้เพิ่มบอท BestBefore เป็นเพื่อน เพิ่มเพื่อนก่อนแล้วกดลองอีกครั้ง
-        </p>
-        <div className="row">
-          {addFriendUrl && (
-            <a href={addFriendUrl} target="_blank" rel="noreferrer">
-              <button type="button">เพิ่มเพื่อน</button>
-            </a>
-          )}
-          <button type="button" className="ghost" onClick={retry}>
-            ลองอีกครั้ง
-          </button>
-        </div>
-      </div>
+    <div className="flex min-h-dvh items-center justify-center p-4">
+      {children}
     </div>
   );
 }
 
+function NotMember({ retry }: { retry: () => void }) {
+  const addFriendUrl = import.meta.env.VITE_LINE_ADD_FRIEND_URL;
+  return (
+    <Centered>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>ยังไม่ได้เป็นสมาชิก</CardTitle>
+          <CardDescription>
+            บัญชี LINE นี้ยังไม่ได้เพิ่มบอท BestBefore เป็นเพื่อน เพิ่มเพื่อนก่อนแล้วกดลองอีกครั้ง
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          {addFriendUrl && (
+            <Button asChild className="w-full">
+              <a href={addFriendUrl} target="_blank" rel="noreferrer">
+                เพิ่มเพื่อน
+              </a>
+            </Button>
+          )}
+          <Button variant="outline" className="w-full" onClick={retry}>
+            ลองอีกครั้ง
+          </Button>
+        </CardContent>
+      </Card>
+    </Centered>
+  );
+}
+
+const NAV: {
+  to: "/" | "/add" | "/history" | "/settings" | "/help";
+  label: string;
+  Icon: ComponentType<{ className?: string }>;
+}[] = [
+  { Icon: ListChecks, label: "รายการ", to: "/" },
+  { Icon: Plus, label: "เพิ่ม", to: "/add" },
+  { Icon: History, label: "ประวัติ", to: "/history" },
+  { Icon: Settings, label: "ตั้งค่า", to: "/settings" },
+  { Icon: CircleHelp, label: "ช่วย", to: "/help" },
+];
+
 function Shell() {
   return (
-    <div className="app">
-      <header className="topbar">
-        <Link to="/" className="brand">
-          BestBefore
-        </Link>
-        <nav className="topnav">
-          <Link to="/">รายการ</Link>
-          <Link to="/add">เพิ่ม</Link>
-          <Link to="/history">ประวัติ</Link>
-          <Link to="/settings">ตั้งค่า</Link>
-          <Link to="/help">ช่วย</Link>
-        </nav>
+    <div className="bg-background min-h-dvh">
+      <header className="bg-background/90 sticky top-0 z-30 border-b backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4">
+          <Link
+            to="/"
+            className="text-primary text-lg font-bold tracking-tight"
+          >
+            BestBefore
+          </Link>
+          <nav className="hidden items-center gap-1 sm:flex">
+            {NAV.map(({ to, label, Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                activeOptions={{ exact: to === "/" }}
+                className="text-muted-foreground hover:bg-muted hover:text-foreground data-[status=active]:bg-muted data-[status=active]:text-foreground flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
+              >
+                <Icon className="size-4" />
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </header>
-      <main className="content">
+      <main className="mx-auto w-full max-w-3xl px-4 py-4 pb-[calc(var(--tabbar-h)+1rem)] sm:pb-8">
         <Outlet />
       </main>
-      <nav className="bottomnav">
-        <Link to="/">
-          <span>📋</span>รายการ
-        </Link>
-        <Link to="/add">
-          <span>➕</span>เพิ่ม
-        </Link>
-        <Link to="/history">
-          <span>🕘</span>ประวัติ
-        </Link>
-        <Link to="/settings">
-          <span>⚙️</span>ตั้งค่า
-        </Link>
-        <Link to="/help">
-          <span>❓</span>ช่วย
-        </Link>
+      <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-30 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
+        <ul className="grid h-15 grid-cols-5">
+          {NAV.map(({ to, label, Icon }) => (
+            <li key={to}>
+              <Link
+                to={to}
+                activeOptions={{ exact: to === "/" }}
+                className={cn(
+                  "text-muted-foreground flex h-full flex-col items-center justify-center gap-0.5 text-[11px]",
+                  "data-[status=active]:text-primary"
+                )}
+              >
+                <Icon className="size-5" />
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
     </div>
   );

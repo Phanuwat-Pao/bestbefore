@@ -1,16 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import { BellOff, BellRing, LogOut, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { api } from "../../convex/_generated/api";
-import { isInLineApp } from "../lib/liff";
+import { Page } from "@/components/page";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { isInLineApp } from "@/lib/liff";
 import {
   currentPushEndpoint,
   pushSupported,
   subscribeToPush,
   unsubscribeFromPush,
-} from "../lib/push";
-import { useReadySession, useSession } from "../lib/session";
+} from "@/lib/push";
+import { useReadySession, useSession } from "@/lib/session";
+
+import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
@@ -18,25 +34,37 @@ function SettingsPage() {
   const { member } = useReadySession();
   const { logout } = useSession();
   return (
-    <section className="stack">
-      <h1>ตั้งค่า</h1>
-      <div className="card row">
-        {member.pictureUrl && (
-          <img className="avatar" src={member.pictureUrl} alt="" />
-        )}
-        <div className="grow">
-          <div>{member.displayName ?? "สมาชิก"}</div>
-          <div className="muted small">เข้าสู่ระบบด้วย LINE</div>
-        </div>
-        <button type="button" className="ghost" onClick={logout}>
-          ออกจากระบบ
-        </button>
-      </div>
+    <Page title="ตั้งค่า">
+      <Card>
+        <CardContent className="flex items-center gap-3">
+          {member.pictureUrl ? (
+            <img
+              className="size-11 rounded-full object-cover"
+              src={member.pictureUrl}
+              alt=""
+            />
+          ) : (
+            <div className="bg-muted size-11 rounded-full" />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium">
+              {member.displayName ?? "สมาชิก"}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              เข้าสู่ระบบด้วย LINE
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={logout}>
+            <LogOut data-icon="inline-start" />
+            ออก
+          </Button>
+        </CardContent>
+      </Card>
       <PushSection />
       <ReminderSection />
       <SourcesSection />
       <MembersSection />
-    </section>
+    </Page>
   );
 }
 
@@ -55,6 +83,7 @@ function PushSection() {
     load();
   }, []);
 
+  const inLine = isInLineApp();
   const thisDeviceOn =
     endpoint !== null && (mine ?? []).some((s) => s.endpoint === endpoint);
 
@@ -81,50 +110,67 @@ function PushSection() {
   };
 
   return (
-    <div className="card stack">
-      <h2>การแจ้งเตือน</h2>
-      <p className="muted small">
-        สรุปของใกล้หมดอายุทุกเช้า 9 โมง ส่งเป็นการแจ้งเตือนของเบราว์เซอร์ ไม่ใช้โควตาข้อความ
-        LINE
-        {isInLineApp() &&
-          " · ในแอป LINE เปิดการแจ้งเตือนไม่ได้ ให้เปิดเว็บนี้ใน Safari หรือ Chrome แล้วเพิ่มไปยังหน้าจอโฮม"}
-      </p>
-      {!pushSupported() && !isInLineApp() && (
-        <p className="muted small">เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน</p>
-      )}
-      <div className="row">
-        {thisDeviceOn ? (
-          <button type="button" className="ghost" onClick={disable}>
-            ปิดบนอุปกรณ์นี้
-          </button>
-        ) : (
-          <button type="button" onClick={enable} disabled={isInLineApp()}>
-            เปิดบนอุปกรณ์นี้
-          </button>
+    <Card>
+      <CardHeader>
+        <CardTitle>การแจ้งเตือน</CardTitle>
+        <CardDescription>
+          สรุปของใกล้หมดอายุทุกเช้า 9 โมง ส่งเป็นการแจ้งเตือนของเบราว์เซอร์ ไม่ใช้โควตาข้อความ
+          LINE
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {inLine && (
+          <p className="text-muted-foreground text-sm">
+            ในแอป LINE เปิดการแจ้งเตือนไม่ได้ ให้เปิดเว็บนี้ใน Safari หรือ Chrome
+            แล้วเพิ่มไปยังหน้าจอโฮม
+          </p>
         )}
-      </div>
-      {msg && <p className="muted small">{msg}</p>}
-      {mine && mine.length > 0 && (
-        <ul className="list compact">
-          {mine.map((s) => (
-            <li key={s.endpoint} className="item">
-              <div className="small grow">
-                {s.endpoint === endpoint
-                  ? "อุปกรณ์นี้"
-                  : (s.userAgent ?? "อุปกรณ์อื่น").slice(0, 60)}
-              </div>
-              <button
-                type="button"
-                className="ghost"
-                onClick={() => remove({ endpoint: s.endpoint, token })}
-              >
-                ลบ
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+        {!(pushSupported() || inLine) && (
+          <p className="text-muted-foreground text-sm">
+            เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน
+          </p>
+        )}
+        {thisDeviceOn ? (
+          <Button variant="outline" onClick={disable}>
+            <BellOff data-icon="inline-start" />
+            ปิดบนอุปกรณ์นี้
+          </Button>
+        ) : (
+          <Button onClick={enable} disabled={inLine}>
+            <BellRing data-icon="inline-start" />
+            เปิดบนอุปกรณ์นี้
+          </Button>
+        )}
+        {msg && <p className="text-muted-foreground text-sm">{msg}</p>}
+        {mine && mine.length > 0 && (
+          <>
+            <Separator />
+            <ul className="flex flex-col gap-2">
+              {mine.map((s) => (
+                <li
+                  key={s.endpoint}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {s.endpoint === endpoint
+                      ? "อุปกรณ์นี้"
+                      : (s.userAgent ?? "อุปกรณ์อื่น")}
+                  </span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="ลบอุปกรณ์นี้"
+                    onClick={() => remove({ endpoint: s.endpoint, token })}
+                  >
+                    <Trash2 />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -142,35 +188,45 @@ function ReminderSection() {
   };
 
   return (
-    <div className="card stack">
-      <h2>ช่วงเวลาเตือน</h2>
-      <label htmlFor="reminderDays">
-        แจ้งเตือนบนเว็บและนับว่า "ใกล้หมด" เมื่อเหลือไม่เกิน (วัน)
-      </label>
-      <input
-        id="reminderDays"
-        type="number"
-        min={0}
-        max={60}
-        value={reminderDays}
-        onChange={(e) => setReminderDays(Number(e.target.value))}
-      />
-      <label htmlFor="piggybackDays">บอทเตือนในกลุ่มเมื่อเหลือไม่เกิน (วัน)</label>
-      <input
-        id="piggybackDays"
-        type="number"
-        min={0}
-        max={60}
-        value={piggybackDays}
-        onChange={(e) => setPiggybackDays(Number(e.target.value))}
-      />
-      <p className="muted small">
-        บอทจะตอบเตือนต่อท้ายข้อความใดก็ได้ในกลุ่ม วันละไม่เกินหนึ่งครั้งต่อกลุ่ม
-      </p>
-      <button type="button" onClick={save}>
-        {saved ? "บันทึกแล้ว" : "บันทึก"}
-      </button>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>ช่วงเวลาเตือน</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="reminderDays">
+            นับว่า "ใกล้หมด" และแจ้งเตือนบนเว็บเมื่อเหลือไม่เกิน (วัน)
+          </Label>
+          <Input
+            id="reminderDays"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={60}
+            className="h-11 text-base"
+            value={reminderDays}
+            onChange={(e) => setReminderDays(Number(e.target.value))}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="piggybackDays">บอทเตือนในกลุ่มเมื่อเหลือไม่เกิน (วัน)</Label>
+          <Input
+            id="piggybackDays"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={60}
+            className="h-11 text-base"
+            value={piggybackDays}
+            onChange={(e) => setPiggybackDays(Number(e.target.value))}
+          />
+          <p className="text-muted-foreground text-sm">
+            บอทจะตอบเตือนต่อท้ายข้อความใดก็ได้ในกลุ่ม วันละไม่เกินหนึ่งครั้งต่อกลุ่ม
+          </p>
+        </div>
+        <Button onClick={save}>{saved ? "บันทึกแล้ว" : "บันทึก"}</Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -179,46 +235,51 @@ function SourcesSection() {
   const sources = useQuery(api.sources.list, { token });
   const setPiggyback = useMutation(api.sources.setPiggyback);
   return (
-    <div className="card stack">
-      <h2>กลุ่มที่บอทอยู่</h2>
-      {sources === undefined ? (
-        <p className="muted">กำลังโหลด…</p>
-      ) : sources.length === 0 ? (
-        <p className="muted small">ยังไม่มี เชิญบอทเข้ากลุ่ม LINE ของบ้านก่อน</p>
-      ) : (
-        <ul className="list compact">
-          {sources.map((s) => (
-            <li key={s.id} className="item">
-              <div className="grow">
-                <div>
-                  {s.displayName ??
-                    (s.sourceType === "group" ? "กลุ่ม" : "แชทหลายคน")}
+    <Card>
+      <CardHeader>
+        <CardTitle>กลุ่มที่บอทอยู่</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {sources === undefined ? (
+          <Skeleton className="h-10 w-full" />
+        ) : sources.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            ยังไม่มี เชิญบอทเข้ากลุ่ม LINE ของบ้านก่อน
+          </p>
+        ) : (
+          <ul className="flex flex-col divide-y">
+            {sources.map((s) => (
+              <li
+                key={s.id}
+                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">
+                    {s.displayName ??
+                      (s.sourceType === "group" ? "กลุ่ม" : "แชทหลายคน")}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {s.lastPiggybackOn
+                      ? `เตือนล่าสุด ${s.lastPiggybackOn}`
+                      : "ยังไม่เคยเตือน"}
+                  </div>
                 </div>
-                <div className="muted small">
-                  {s.lastPiggybackOn
-                    ? `เตือนล่าสุด ${s.lastPiggybackOn}`
-                    : "ยังไม่เคยเตือน"}
-                </div>
-              </div>
-              <label className="row small">
-                <input
-                  type="checkbox"
+                <Label htmlFor={`pb-${s.id}`} className="text-sm">
+                  เตือนในกลุ่ม
+                </Label>
+                <Switch
+                  id={`pb-${s.id}`}
                   checked={s.piggybackEnabled}
-                  onChange={(e) =>
-                    setPiggyback({
-                      enabled: e.target.checked,
-                      sourceId: s.id,
-                      token,
-                    })
+                  onCheckedChange={(enabled) =>
+                    setPiggyback({ enabled, sourceId: s.id, token })
                   }
                 />
-                เตือนในกลุ่ม
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -226,23 +287,33 @@ function MembersSection() {
   const { token } = useReadySession();
   const members = useQuery(api.members.list, { token });
   return (
-    <div className="card stack">
-      <h2>สมาชิกในบ้าน</h2>
-      <p className="muted small">ใครที่เพิ่มบอทเป็นเพื่อนจะเห็นรายการเดียวกัน</p>
-      {members === undefined ? (
-        <p className="muted">กำลังโหลด…</p>
-      ) : (
-        <ul className="list compact">
-          {members.map((m) => (
-            <li key={m.id} className="item">
-              {m.pictureUrl && (
-                <img className="avatar small" src={m.pictureUrl} alt="" />
-              )}
-              <div className="grow">{m.displayName ?? "สมาชิก"}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>สมาชิกในบ้าน</CardTitle>
+        <CardDescription>ใครที่เพิ่มบอทเป็นเพื่อนจะเห็นรายการเดียวกัน</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {members === undefined ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {members.map((m) => (
+              <li key={m.id} className="flex items-center gap-3">
+                {m.pictureUrl ? (
+                  <img
+                    className="size-8 rounded-full object-cover"
+                    src={m.pictureUrl}
+                    alt=""
+                  />
+                ) : (
+                  <div className="bg-muted size-8 rounded-full" />
+                )}
+                <span className="truncate">{m.displayName ?? "สมาชิก"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
