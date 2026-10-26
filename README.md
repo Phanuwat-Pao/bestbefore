@@ -16,7 +16,7 @@ Full spec: [`docs/SRS.md`](docs/SRS.md) (v1.0).
 - **AI:** Gemini Flash-Lite on the Google AI Studio free tier (`@google/genai`)
 - **LINE:** Messaging API replies only (no push quota), Flex messages, postbacks
 - **Reminders:** piggyback reply in the group, Web Push daily digest from a cron
-- **Tooling:** Ultracite preset driving oxlint + oxfmt, TypeScript 7, lefthook
+- **Tooling:** Ultracite preset driving oxlint + oxfmt, TypeScript 7.1 via tsc-rs (`typescript` is the `@tsc-rs/typescript` drop-in), lefthook
 
 ## How it fits together
 

@@ -6,9 +6,17 @@ auditConfig:
   ignoreGhsas:
     - GHSA-vfj7-8cjw-p6xm
 allowBuilds:
+  '@tsc-rs/typescript': true
   '@google/genai': true
   esbuild: true
   lefthook: true
   protobufjs: true
 minimumReleaseAgeExclude:
+    - '@tsc-rs/*'
     - lucide-react@1.53.0
+
+# typescript is @tsc-rs/typescript, whose npm version (0.8.x) is outside
+# every typescript peer range.
+peerDependencyRules:
+  allowAny:
+    - typescript
